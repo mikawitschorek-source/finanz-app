@@ -1,0 +1,14 @@
+{
+  "name": "FinanzApp",
+  "short_name": "FinanzApp",
+  "description": "Deine persönliche Finanzplanung",
+  "start_url": "/finanz-app/",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#0EA5E9",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/finanz-app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/finanz-app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
