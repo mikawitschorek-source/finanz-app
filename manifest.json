@@ -5,7 +5,7 @@
   "start_url": "/finanz-app/",
   "scope": "/finanz-app/",
   "display": "standalone",
-  "background_color": "#0c1a2e",
+  "background_color": "#ffffff",
   "theme_color": "#0EA5E9",
   "orientation": "portrait",
   "icons": [
