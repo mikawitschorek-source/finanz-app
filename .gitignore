@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables — niemals in Git!
+.env
+.env.local
+.env.*.local
