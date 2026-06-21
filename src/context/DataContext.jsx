@@ -7,9 +7,8 @@ const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 const safeNum = (v) => parseFloat(v) || 0;
 
-// Intervall → Monate
 const freqToMonths = {
-  weekly: 0,        // sonderbehandlung
+  weekly: 0,
   monthly: 1,
   bimonthly: 2,
   quarterly: 3,
@@ -39,23 +38,23 @@ function generateCarriedEntries(entries, targetYear) {
 
 export function DataProvider({ children }) {
   const { user } = useAuth();
-  const [income,   setIncome]   = useState([]);
+  const [income, setIncome] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [wallets,  setWallets]  = useState([]);
+  const [wallets, setWallets] = useState([]);
 
   useEffect(() => {
     if (!user) { setIncome([]); setExpenses([]); setWallets([]); return; }
     const uid = user.uid;
-    const unsubIncome   = onSnapshot(query(collection(db,"users",uid,"income"),   orderBy("createdAt","desc")), snap => setIncome(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    const unsubIncome = onSnapshot(query(collection(db,"users",uid,"income"), orderBy("createdAt","desc")), snap => setIncome(snap.docs.map(d=>({id:d.id,...d.data()}))));
     const unsubExpenses = onSnapshot(query(collection(db,"users",uid,"expenses"), orderBy("createdAt","desc")), snap => setExpenses(snap.docs.map(d=>({id:d.id,...d.data()}))));
-    const unsubWallets  = onSnapshot(query(collection(db,"users",uid,"wallets"),  orderBy("createdAt","desc")), snap => setWallets(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    const unsubWallets = onSnapshot(query(collection(db,"users",uid,"wallets"), orderBy("createdAt","desc")), snap => setWallets(snap.docs.map(d=>({id:d.id,...d.data()}))));
     return () => { unsubIncome(); unsubExpenses(); unsubWallets(); };
   }, [user]);
 
   function getIncomeForYear(year) {
-    const direct    = income.filter(i => i.date && new Date(i.date).getFullYear() === year);
+    const direct = income.filter(i => i.date && new Date(i.date).getFullYear() === year);
     const directIds = new Set(direct.map(i => i.id));
-    const carried   = generateCarriedEntries(income, year).filter(c => {
+    const carried = generateCarriedEntries(income, year).filter(c => {
       const baseId = c.id.split("_carried_")[0];
       return !directIds.has(baseId) && !direct.some(d => d.name === c.name && d.category === c.category);
     });
@@ -63,13 +62,13 @@ export function DataProvider({ children }) {
   }
 
   function getExpensesForYear(year) {
-    const direct      = expenses.filter(e => e.date && new Date(e.date).getFullYear() === year);
+    const direct = expenses.filter(e => e.date && new Date(e.date).getFullYear() === year);
     const directNames = new Set(direct.map(e => `${e.name}_${e.category}`));
-    const carried     = generateCarriedEntries(expenses, year).filter(c => !directNames.has(`${c.name}_${c.category}`));
+    const carried = generateCarriedEntries(expenses, year).filter(c => !directNames.has(`${c.name}_${c.category}`));
     return [...direct, ...carried];
   }
 
-  function getTotalIncomeForYear(year)   { return getIncomeForYear(year).reduce((s,i)  => s + safeNum(i.netAmount ?? i.amount), 0); }
+  function getTotalIncomeForYear(year) { return getIncomeForYear(year).reduce((s,i) => s + safeNum(i.netAmount ?? i.amount), 0); }
   function getTotalExpensesForYear(year) { return getExpensesForYear(year).reduce((s,e) => s + safeNum(e.amount), 0); }
 
   const deleteTransaction = async (type, id) => {
@@ -77,20 +76,27 @@ export function DataProvider({ children }) {
     await deleteDoc(doc(db,"users",user.uid, type === "income" ? "income" : "expenses", id));
   };
 
-  const addIncome   = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"income"),   {...data, createdAt: serverTimestamp()}); };
-  const addExpense  = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"expenses"), {...data, createdAt: serverTimestamp()}); };
-  const addWallet   = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"wallets"),  {...data, createdAt: serverTimestamp()}); };
+  const deleteIncome = (id) => deleteTransaction("income", id);
+  const deleteExpense = (id) => deleteTransaction("expense", id);
+
+  const addIncome = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"income"), {...data, createdAt: serverTimestamp()}); };
+  const addExpense = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"expenses"), {...data, createdAt: serverTimestamp()}); };
+  const addWallet = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"wallets"), {...data, createdAt: serverTimestamp()}); };
   const updateWallet = async (id, data) => { if (!user) return; await setDoc(doc(db,"users",user.uid,"wallets",id), {...data, updatedAt: serverTimestamp()}, {merge:true}); };
   const deleteWallet = async (id) => { if (!user) return; await deleteDoc(doc(db,"users",user.uid,"wallets",id)); };
 
   return (
     <DataContext.Provider value={{
       income, expenses, wallets,
-      addIncome, addExpense, addWallet, updateWallet, deleteWallet,
+      addIncome, addExpense, addWallet,
+      updateWallet, deleteWallet,
       deleteTransaction,
-      getIncomeForYear, getExpensesForYear,
-      getTotalIncomeForYear, getTotalExpensesForYear,
-      freqToMonths,
+      deleteIncome,
+      deleteExpense,
+      getIncomeForYear,
+      getExpensesForYear,
+      getTotalIncomeForYear,
+      getTotalExpensesForYear
     }}>
       {children}
     </DataContext.Provider>
