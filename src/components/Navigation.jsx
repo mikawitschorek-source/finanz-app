@@ -26,11 +26,7 @@ export default function Navigation({ currentPage, onNavigate, onAdd, onLock }) {
       {/* Desktop Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <rect width="28" height="28" rx="8" fill="#2563eb"/>
-            <path d="M7 14h14M14 7v14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="14" cy="14" r="4" fill="none" stroke="white" strokeWidth="1.5"/>
-          </svg>
+          <img src={appLogo} alt="Logo" width="32" height="32" style={{borderRadius:"8px"}} />
           <div className="sidebar-logo-text">
             <span className="sidebar-logo-name">FinanzPlaner</span>
             <span className="sidebar-logo-sub">Personal Finance</span>
@@ -65,10 +61,7 @@ export default function Navigation({ currentPage, onNavigate, onAdd, onLock }) {
       {/* Mobile Header */}
       <header className="mobile-header">
         <div className="mobile-logo">
-          <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-            <rect width="28" height="28" rx="8" fill="#2563eb"/>
-            <path d="M7 14h14M14 7v14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
+          <img src={appLogo} alt="Logo" width="26" height="26" style={{borderRadius:"6px"}} />
           FinanzPlaner
         </div>
         <div className="header-right">
