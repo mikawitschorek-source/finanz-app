@@ -7,17 +7,6 @@ const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 const safeNum = (v) => parseFloat(v) || 0;
 
-const freqToMonths = {
-  weekly: 0,
-  monthly: 1,
-  bimonthly: 2,
-  quarterly: 3,
-  halfyearly: 6,
-  yearly: 12,
-  biyearly: 24,
-  once: null,
-};
-
 function generateCarriedEntries(entries, targetYear) {
   const carried = [];
   entries.forEach(entry => {
@@ -26,12 +15,7 @@ function generateCarriedEntries(entries, targetYear) {
     if (targetYear <= entryYear) return;
     const newDate = new Date(entry.date);
     newDate.setFullYear(targetYear);
-    carried.push({
-      ...entry,
-      id: `${entry.id}_carried_${targetYear}`,
-      date: newDate.toISOString().split("T")[0],
-      isCarried: true
-    });
+    carried.push({ ...entry, id: `${entry.id}_carried_${targetYear}`, date: newDate.toISOString().split("T")[0], isCarried: true });
   });
   return carried;
 }
@@ -41,14 +25,18 @@ export function DataProvider({ children }) {
   const [income, setIncome] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [wallets, setWallets] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [budgets, setBudgets] = useState([]);
 
   useEffect(() => {
-    if (!user) { setIncome([]); setExpenses([]); setWallets([]); return; }
+    if (!user) { setIncome([]); setExpenses([]); setWallets([]); setGoals([]); setBudgets([]); return; }
     const uid = user.uid;
     const unsubIncome = onSnapshot(query(collection(db,"users",uid,"income"), orderBy("createdAt","desc")), snap => setIncome(snap.docs.map(d=>({id:d.id,...d.data()}))));
     const unsubExpenses = onSnapshot(query(collection(db,"users",uid,"expenses"), orderBy("createdAt","desc")), snap => setExpenses(snap.docs.map(d=>({id:d.id,...d.data()}))));
     const unsubWallets = onSnapshot(query(collection(db,"users",uid,"wallets"), orderBy("createdAt","desc")), snap => setWallets(snap.docs.map(d=>({id:d.id,...d.data()}))));
-    return () => { unsubIncome(); unsubExpenses(); unsubWallets(); };
+    const unsubGoals = onSnapshot(query(collection(db,"users",uid,"goals"), orderBy("createdAt","desc")), snap => setGoals(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    const unsubBudgets = onSnapshot(collection(db,"users",uid,"budgets"), snap => setBudgets(snap.docs.map(d=>({id:d.id,...d.data()}))));
+    return () => { unsubIncome(); unsubExpenses(); unsubWallets(); unsubGoals(); unsubBudgets(); };
   }, [user]);
 
   function getIncomeForYear(year) {
@@ -75,7 +63,6 @@ export function DataProvider({ children }) {
     if (!user || id.includes("_carried_")) return;
     await deleteDoc(doc(db,"users",user.uid, type === "income" ? "income" : "expenses", id));
   };
-
   const deleteIncome = (id) => deleteTransaction("income", id);
   const deleteExpense = (id) => deleteTransaction("expense", id);
 
@@ -85,18 +72,32 @@ export function DataProvider({ children }) {
   const updateWallet = async (id, data) => { if (!user) return; await setDoc(doc(db,"users",user.uid,"wallets",id), {...data, updatedAt: serverTimestamp()}, {merge:true}); };
   const deleteWallet = async (id) => { if (!user) return; await deleteDoc(doc(db,"users",user.uid,"wallets",id)); };
 
+  // Goals
+  const addGoal = async (data) => { if (!user) return; await addDoc(collection(db,"users",user.uid,"goals"), {...data, createdAt: serverTimestamp()}); };
+  const updateGoal = async (id, data) => { if (!user) return; await setDoc(doc(db,"users",user.uid,"goals",id), {...data, updatedAt: serverTimestamp()}, {merge:true}); };
+  const deleteGoal = async (id) => { if (!user) return; await deleteDoc(doc(db,"users",user.uid,"goals",id)); };
+
+  // Budgets
+  const setBudget = async (category, amount) => {
+    if (!user) return;
+    const existing = budgets.find(b => b.category === category);
+    if (existing) {
+      await setDoc(doc(db,"users",user.uid,"budgets",existing.id), { category, amount, updatedAt: serverTimestamp() }, {merge:true});
+    } else {
+      await addDoc(collection(db,"users",user.uid,"budgets"), { category, amount, createdAt: serverTimestamp() });
+    }
+  };
+  const deleteBudget = async (id) => { if (!user) return; await deleteDoc(doc(db,"users",user.uid,"budgets",id)); };
+
   return (
     <DataContext.Provider value={{
-      income, expenses, wallets,
-      addIncome, addExpense, addWallet,
-      updateWallet, deleteWallet,
-      deleteTransaction,
-      deleteIncome,
-      deleteExpense,
-      getIncomeForYear,
-      getExpensesForYear,
-      getTotalIncomeForYear,
-      getTotalExpensesForYear
+      income, expenses, wallets, goals, budgets,
+      addIncome, addExpense, addWallet, updateWallet, deleteWallet,
+      deleteTransaction, deleteIncome, deleteExpense,
+      getIncomeForYear, getExpensesForYear,
+      getTotalIncomeForYear, getTotalExpensesForYear,
+      addGoal, updateGoal, deleteGoal,
+      setBudget, deleteBudget,
     }}>
       {children}
     </DataContext.Provider>

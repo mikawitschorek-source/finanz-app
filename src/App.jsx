@@ -6,6 +6,8 @@ import Income from "./pages/Income";
 import Expenses from "./pages/Expenses";
 import Analytics from "./pages/Analytics";
 import Wallets from "./pages/Wallets";
+import Goals from "./pages/Goals";
+import Budget from "./pages/Budget";
 import Navigation from "./components/Navigation";
 import AddTransaction from "./components/AddTransaction";
 import LockScreen, { useLockScreen } from "./components/LockScreen";
@@ -17,27 +19,21 @@ export default function App() {
   const { locked, unlock, lock } = useLockScreen();
 
   if (loading) return (
-    <div className="splash"><div className="spinner" /></div>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100dvh" }}>
+      <div className="spinner" />
+    </div>
   );
 
   if (!user) return <Login />;
-
-  // App gesperrt
   if (locked) return <LockScreen onUnlock={unlock} />;
 
-  const pages = { dashboard: Dashboard, income: Income, expenses: Expenses, analytics: Analytics, wallets: Wallets };
-  const Page = pages[currentPage] || Dashboard;
+  const pages = { dashboard: <Dashboard onNavigate={setCurrentPage} />, income: <Income />, expenses: <Expenses />, analytics: <Analytics />, wallets: <Wallets />, goals: <Goals />, budget: <Budget /> };
 
   return (
     <div className="app-layout">
-      <Navigation
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-        onAddClick={() => setShowAdd(true)}
-        onLock={lock}
-      />
+      <Navigation currentPage={currentPage} onNavigate={setCurrentPage} onAdd={() => setShowAdd(true)} onLock={lock} />
       <main className="main-content">
-        <Page />
+        {pages[currentPage] || <Dashboard onNavigate={setCurrentPage} />}
       </main>
       {showAdd && <AddTransaction onClose={() => setShowAdd(false)} />}
     </div>
