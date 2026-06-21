@@ -85,7 +85,7 @@ export default function Goals() {
       {goals.length === 0 && !showForm ? (
         <div className="empty-state">
           <div className="empty-icon">🎯</div>
-          <p className="empty-title">Noch keine Sparziele</div>
+          <p className="empty-title">Noch keine Sparziele</p>
           <p className="empty-hint">Setze dir Ziele und verfolge deinen Fortschritt</p>
           <button className="btn-primary-sm" onClick={() => setShowForm(true)}>Erstes Ziel erstellen</button>
         </div>
